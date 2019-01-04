@@ -37,10 +37,9 @@ function extractPageHooks (options) {
     methods && Object.keys(methods).forEach(key => {
       if (PAGE_HOOKS.indexOf(key) > -1) {
         if (newOptions[key]) {
-          console.warn(`Don't redefine the lifecycle [${key}] in methods， it will ignore the methods's lifecycle if redefined`)
-        } else {
-          newOptions[key] = methods[key]
+          console.warn(`Don't redefine the lifecycle [${key}]， it will use the methods's lifecycle if redefined`)
         }
+        newOptions[key] = methods[key]
       }
     })
     return newOptions
@@ -57,8 +56,8 @@ function mergeMixins (parent, child) {
       mergeData(parent, child, key)
     } else if (/computed|properties|methods|proto/.test(key)) {
       mergeSimpleProps(parent, child, key)
-    } else if (key === 'watch') {
-      mergeWatch(parent, child, key)
+    } else if (/watch|lifetimes|pageLifetimes/.test(key)) {
+      mergeCompose(parent, child, key)
     } else if (key !== 'mixins') {
       mergeDefault(parent, child, key)
     }
@@ -70,7 +69,7 @@ function mergeDefault (parent, child, key) {
 }
 
 function mergeHooks (parent, child, key) {
-  if (parent.hasOwnProperty(key)) {
+  if (parent[key]) {
     parent[key].push(child[key])
   } else {
     parent[key] = [child[key]]
@@ -94,7 +93,7 @@ function mergeData (parent, child, key) {
   merge(parent[key], childVal)
 }
 
-function mergeWatch (parent, child, key) {
+function mergeCompose (parent, child, key) {
   let parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
@@ -106,29 +105,41 @@ function mergeWatch (parent, child, key) {
         ? [parentVal[key], childVal[key]]
         : parentVal[key].concat([childVal[key]])
     } else {
-      parentVal[key] = childVal[key]
+      parentVal[key] = [childVal[key]]
+    }
+  })
+}
+
+function composeHooks (target, includes) {
+  Object.keys(target).forEach(key => {
+    if (!includes || includes.indexOf(key) !== -1) {
+      const hooksArr = target[key]
+      hooksArr && (target[key] = function (...args) {
+        let result
+        for (let i = 0; i < hooksArr.length; i++) {
+          if (type(hooksArr[i]) === 'Function') {
+            const data = hooksArr[i].apply(this, args)
+            data !== undefined && (result = data)
+          }
+        }
+        return result
+      })
     }
   })
 }
 
 function transformHOOKS (options) {
-  CURRENT_HOOKS.forEach(key => {
-    const hooksArr = options[key]
-    hooksArr && (options[key] = function (...args) {
-      let result
-      for (let i = 0; i < hooksArr.length; i++) {
-        if (type(hooksArr[i]) === 'Function') {
-          const data = hooksArr[i].apply(this, args)
-          data !== undefined && (result = data)
-        }
+  composeHooks(options, CURRENT_HOOKS)
+  options.lifetimes && composeHooks(options.lifetimes)
+  options.pageLifetimes && composeHooks(options.pageLifetimes)
+  if (curType === 'blend') {
+    for (const key in options) {
+      // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
+      if (typeof options[key] === 'function' && COMPONENT_HOOKS.indexOf(key) === -1) {
+        (options.methods || (options.methods = {}))[key] = options[key]
+        delete options[key]
       }
-      return result
-    })
-    if (options[key] && curType === 'blend' && PAGE_HOOKS.indexOf(key) > -1) {
-      // 使用Component创建page实例，页面专属生命周期需写在methods内部
-      (options.methods || (options.methods = {}))[key] = options[key]
-      delete options[key]
     }
-  })
+  }
   return options
 }

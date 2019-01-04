@@ -16,7 +16,7 @@
     "src"
   ],
   "dependencies": {
-    "mobx": "^3.6.1"
+    "mobx": "^4.8.0"
   },
   "repository": {
     "type": "git",

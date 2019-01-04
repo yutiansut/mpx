@@ -1,8 +1,7 @@
 import {
   observable,
-  computed,
   toJS,
-  extras
+  comparer
 } from 'mobx'
 
 import {
@@ -11,7 +10,8 @@ import {
   type,
   enumerableKeys,
   extend,
-  proxy
+  proxy,
+  defineGetter
 } from '../helper/utils'
 
 import { watch } from './watcher'
@@ -43,10 +43,9 @@ export default class MPXProxy {
     this.init(options)
   }
   init (options) {
-    // 初始化computed
-    const computed = this.initComputed(options.computed)
-    const initialData = this.initialData
-    this.data = observable(extend({}, initialData, computed))
+    const proxyData = extend({}, this.initialData)
+    this.initComputed(options.computed, proxyData)
+    this.data = observable(proxyData)
     /* 计算属性在mobx里面是不可枚举的，所以篡改下 */
     enumerable(this.data, this.computedKeys)
     /* target的数据访问代理到将proxy的data */
@@ -54,12 +53,15 @@ export default class MPXProxy {
     // 初始化watch
     this.initWatch(options.watch)
   }
-  initComputed (computedConfig) {
-    const newComputed = {}
+
+  initComputed (computedConfig, proxyData) {
     this.computedKeys.forEach(key => {
-      newComputed[key] = computed(computedConfig[key], { context: this.target })
+      if (key in proxyData) {
+        console.error(`the computed key 【${key}】 is duplicated, please check`)
+      } else {
+        defineGetter(proxyData, key, computedConfig[key], this.target)
+      }
     })
-    return newComputed
   }
   initWatch (watches) {
     if (type(watches) === 'Object') {
@@ -124,7 +126,7 @@ export default class MPXProxy {
          * 支付宝小程序setData是异步的，所以需要主动遍历所有属性进行track
         */
         if (ignoreKeys.indexOf(key) === -1 && (this.deepDiff || !isForceUpdateKey)) {
-          if (extras.deepEqual(this.cacheData[key], this.data[key])) {
+          if (comparer.structural(this.cacheData[key], this.data[key])) {
             // 强制更新的key，无论是否变化，都要进行最终的setData
             !isForceUpdateKey && ignoreKeys.push(key)
           } else {

@@ -1,5 +1,5 @@
 import {
-  extras
+  comparer
 } from 'mobx'
 
 import {
@@ -39,7 +39,7 @@ function getReactiveMixin (mixinType, options = {}) {
     didUpdate (prevProps) {
       if (prevProps && prevProps !== this.props) {
         Object.keys(prevProps).forEach(key => {
-          if (!extras.deepEqual(this.props[key], prevProps[key])) {
+          if (!comparer.structural(this.props[key], prevProps[key])) {
             this[key] = this.props[key]
           }
         })

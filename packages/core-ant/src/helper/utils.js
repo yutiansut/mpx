@@ -1,3 +1,8 @@
+import {
+  isObservable,
+  get
+} from 'mobx'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
 }
@@ -29,26 +34,22 @@ export function isExistAttr (obj, attr) {
   }
 }
 
-export function getByPath (data, pathStr, notExistOutput) {
+export function getByPath (data, pathStr, defaultVal = '') {
   if (!pathStr) return data
   const path = pathStr.split('.')
-  let notExist = false
   let value = data
   for (let key of path) {
-    if (isExistAttr(value, key)) {
+    if (isObservable(value)) {
+      value = get(value, key)
+    } else if (isExistAttr(value, key)) {
       value = value[key]
     } else {
       value = undefined
-      notExist = true
       break
     }
   }
-  if (notExistOutput) {
-    return notExist ? notExistOutput : value
-  } else {
-    // 小程序setData时不允许undefined数据
-    return value === undefined ? '' : value
-  }
+  // 小程序setData时不允许undefined数据
+  return value === undefined ? defaultVal : value
 }
 
 export function enumerable (target, keys) {
@@ -60,6 +61,22 @@ export function enumerable (target, keys) {
     }
   })
   return target
+}
+
+export function defineGetter (target, key, value, context) {
+  let get
+  if (typeof value === 'function') {
+    get = context ? value.bind(context) : value
+  } else {
+    get = function () {
+      return value
+    }
+  }
+  Object.defineProperty(target, key, {
+    get,
+    configurable: true,
+    enumerable: true
+  })
 }
 
 export function proxy (target, source, keys, mapKeys, readonly) {

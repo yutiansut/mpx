@@ -2,7 +2,9 @@ import {
   Reaction,
   action,
   toJS,
-  isObservableArray
+  isObservableArray,
+  isObservableObject,
+  keys
 } from 'mobx'
 import {
   getByPath,
@@ -42,6 +44,8 @@ export default class Watcher {
         value = toJS(value, false)
       } else if (isObservableArray(value)) {
         value.peek()
+      } else if (isObservableObject(value)) {
+        keys(value)
       }
     })
     return value
@@ -58,7 +62,7 @@ export default class Watcher {
   run () {
     const oldValue = this.value
     this.value = this.getValue()
-    if (this.value !== oldValue || isObject(this.value)) {
+    if (this.value !== oldValue || isObject(this.value) || this.options.forceCallback) {
       this.callback && this.callback(this.value, oldValue)
     }
   }
