@@ -1,9 +1,9 @@
+import {
+  isObservableArray
+} from 'mobx'
+
 export function type (n) {
   return Object.prototype.toString.call(n).slice(8, -1)
-}
-
-export function isObject (obj) {
-  return obj !== null && typeof obj === 'object'
 }
 
 export function normalizeMap (arr) {
@@ -144,4 +144,133 @@ export function dissolveAttrs (target = {}, keys) {
     extend(newOptions, value)
   })
   return newOptions
+}
+
+export function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+export function likeArray (arr) {
+  return Array.isArray(arr) || isObservableArray(arr)
+}
+
+export function isDef (v) {
+  return v !== undefined && v !== null
+}
+
+export function stringifyClass (value) {
+  if (likeArray(value)) {
+    return stringifyArray(value)
+  }
+  if (isObject(value)) {
+    return stringifyObject(value)
+  }
+  if (typeof value === 'string') {
+    return value
+  }
+  return ''
+}
+
+function stringifyArray (value) {
+  let res = ''
+  let stringified
+  for (let i = 0, l = value.length; i < l; i++) {
+    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
+      if (res) res += ' '
+      res += stringified
+    }
+  }
+  return res
+}
+
+function stringifyObject (value) {
+  let res = ''
+  for (const key in value) {
+    if (value[key]) {
+      if (res) res += ' '
+      res += key
+    }
+  }
+  return res
+}
+
+export function concat (a, b) {
+  return a ? b ? (a + ' ' + b) : a : (b || '')
+}
+
+export function hump2dash (value) {
+  return value.replace(/[A-Z]/g, function (match) {
+    return '-' + match.toLowerCase()
+  })
+}
+
+export function dash2hump (value) {
+  return value.replace(/-([a-z])/g, function (match, p1) {
+    return p1.toUpperCase()
+  })
+}
+
+export function parseStyleText (cssText) {
+  const res = {}
+  const listDelimiter = /;(?![^(]*\))/g
+  const propertyDelimiter = /:(.+)/
+  cssText.split(listDelimiter).forEach(function (item) {
+    if (item) {
+      let tmp = item.split(propertyDelimiter)
+      tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
+    }
+  })
+  return res
+}
+
+export function genStyleText (styleObj) {
+  let res = ''
+  for (let key in styleObj) {
+    if (styleObj.hasOwnProperty(key)) {
+      let item = styleObj[key]
+      res += `${hump2dash(key)}:${item};`
+    }
+  }
+  return res
+}
+
+export function mergeObjectArray (arr) {
+  const res = {}
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i]) {
+      extend(res, arr[i])
+    }
+  }
+  return res
+}
+
+export function normalizeDynamicStyle (value) {
+  if (likeArray(value)) {
+    return mergeObjectArray(value)
+  }
+  if (typeof value === 'string') {
+    return parseStyleText(value)
+  }
+  return value
+}
+
+export function isEmptyObject (obj) {
+  for (let key in obj) {
+    return false
+  }
+  return true
+}
+
+export function processUndefined (obj) {
+  let result = {}
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      if (obj[key] !== undefined) {
+        result[key] = obj[key]
+      } else {
+        result[key] = ''
+      }
+    }
+  }
+  return result
 }
