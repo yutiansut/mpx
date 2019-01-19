@@ -5,10 +5,7 @@
 </template>
 
 <script>
-  Page({
-    onLoad: function () {
-    }
-  })
+  Page()
 </script>
 
 <style>

@@ -1,10 +1,11 @@
 {
+  "miniprogramRoot": "dist/",
   "compileType": "miniprogram",
   "setting": {
     "newFeature": true
   },
   "appid": "touristappid",
-  "projectname": "mpx-test",
+  "projectname": "mpx-todomvc",
   "description": "A mpx project",
   "condition": {}
 }
