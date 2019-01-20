@@ -1,8 +1,25 @@
 <script type="application/json">
   {
     "pages": [
-      "pages/index"
+      "pages/index",
+      "pages/profile"
     ],
+    "tabBar": {
+      "list": [
+        {
+          "pagePath": "pages/index",
+          "text": "首页",
+          "iconPath": "images/homepage.png?fallback",
+          "selectedIconPath": "images/homepage_fill.png?fallback"
+        },
+        {
+          "pagePath": "pages/profile",
+          "text": "我的",
+          "iconPath": "images/people.png?fallback",
+          "selectedIconPath": "images/people_fill.png?fallback"
+        }
+      ]
+    },
     "window": {
       "backgroundTextStyle": "light",
       "navigationBarBackgroundColor": "#fff",
