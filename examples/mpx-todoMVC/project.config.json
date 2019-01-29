@@ -1,11 +1,21 @@
 {
-  "miniprogramRoot": "dist/",
-  "compileType": "miniprogram",
-  "setting": {
-    "newFeature": true
-  },
+	"miniprogramRoot": "dist/",
+	"compileType": "miniprogram",
+	"setting": {
+		"urlCheck": true,
+		"es6": false,
+		"postcss": false,
+		"minified": false,
+		"newFeature": true,
+		"autoAudits": false
+	},
   "appid": "touristappid",
-  "projectname": "mpx-todomvc",
-  "description": "A mpx project",
-  "condition": {}
+	"projectname": "mpx-todomvc",
+	"description": "A mpx project",
+	"scripts": {
+		"beforeCompile": "",
+		"beforePreview": "",
+		"beforeUpload": "npm run prod"
+	},
+	"condition": {}
 }
